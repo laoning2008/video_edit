@@ -11,8 +11,13 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+
+set (CMAKE_PREFIX_PATH "$ENV{QT_DIR}/5.12.12/msvc2017")
+
+
+
 find_package(QT NAMES Qt6 Qt5 COMPONENTS Widgets LinguistTools REQUIRED)
-find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets LinguistTools REQUIRED)
+find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Core Gui Widgets LinguistTools REQUIRED)
 
 set(TS_FILES VideoEdit_zh_CN.ts)
 
@@ -62,3 +67,13 @@ set_target_properties(VideoEdit PROPERTIES
 if(QT_VERSION_MAJOR EQUAL 6)
     qt_finalize_executable(VideoEdit)
 endif()
+
+
+# message(STATUS $<TARGET_FILE:Qt5::Core>)
+# message(STATUS $<TARGET_FILE_DIR:VideoEdit>)
+
+# add_custom_command(TARGET VideoEdit POST_BUILD
+#         COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:Qt5::Core> $<TARGET_FILE_DIR:VideoEdit>
+#         COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:Qt5::Gui> $<TARGET_FILE_DIR:VideoEdit>
+#         COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:Qt5::Widgets> $<TARGET_FILE_DIR:VideoEdit>
+#         )
