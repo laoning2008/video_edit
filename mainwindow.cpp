@@ -13,9 +13,8 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->splitter_main->setSizes(sizesMain);
 
     QList<int> sizesTop;
-    sizesTop << 20000 << 40000 << 40000;
+    sizesTop << 20000 << 80000;
     ui->splitte_top->setSizes(sizesTop);
-
 }
 
 MainWindow::~MainWindow()
