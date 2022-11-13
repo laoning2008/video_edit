@@ -66,7 +66,7 @@ void MainWindow::initVedioFilesWidget() {
     ui->lvFiles->setItemDelegate(delegate);
     ui->lvFiles->setModel(new QStandardItemModel);
 
-    connect(ui->lvFiles->selectionModel(), SIGNAL(currentChanged(const QModelIndex, const QModelIndex)), this, SLOT(videoFileSelectionChanged(QModelIndex, QModelIndex)));
+    connect(ui->lvFiles->selectionModel(), SIGNAL(currentChanged(const QModelIndex, const QModelIndex)), this, SLOT(videoListViewCurrentChanged(QModelIndex, QModelIndex)));
 }
 
 
