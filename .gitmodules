@@ -1,0 +1,9 @@
+[submodule "ffmpegthumbnailer"]
+	path = ffmpegthumbnailer
+	url = git@github.com:dirkvdb/ffmpegthumbnailer.git
+[submodule "libopenshot-audio"]
+	path = libopenshot-audio
+	url = git@github.com:OpenShot/libopenshot-audio.git
+[submodule "libopenshot"]
+	path = libopenshot
+	url = git@github.com:OpenShot/libopenshot.git

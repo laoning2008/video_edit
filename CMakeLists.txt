@@ -1,6 +1,12 @@
 cmake_minimum_required(VERSION 3.5)
+include(ExternalProject)
 
-project(VideoEdit VERSION 0.1 LANGUAGES CXX)
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules)
+set(COMPLIER_FLAGS "-Wno-reserved-user-defined-literal")
+list(APPEND CMAKE_C_FLAGS ${COMPLIER_FLAGS})
+list(APPEND CMAKE_CXX_FLAGS ${COMPLIER_FLAGS})
+
+project(VideoEditor VERSION 0.1 LANGUAGES CXX)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
@@ -10,80 +16,61 @@ set(CMAKE_AUTORCC ON)
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
-MESSAGE(STATUS "operation system is ${CMAKE_SYSTEM}")
  
 
-IF (WIN32)
-    set (CMAKE_PREFIX_PATH "$ENV{QT_DIR}/5.12.12/msvc2017")
-ELSEIF (APPLE)
-    set (CMAKE_PREFIX_PATH "$ENV{QT_DIR}/5.12.12/clang_64")
-ELSE ()
-    MESSAGE(STATUS "unsuport system: ${CMAKE_SYSTEM}")
-ENDIF ()
+#IF (WIN32)
+#    set (Qt5_DIR "/Users/laoning/Qt5.12.12/5.12.12/clang_64/lib/cmake/Qt5")
+#ELSEIF (APPLE)
+#    set (Qt5_DIR "/Users/laoning/Qt5.12.12/5.12.12/clang_64/lib/cmake/Qt5")
+#ELSE ()
+#    MESSAGE(STATUS "unsuport system: ${CMAKE_SYSTEM}")
+#ENDIF ()
 
 
 
-
-
-find_package(QT NAMES Qt6 Qt5 COMPONENTS Widgets LinguistTools REQUIRED)
-find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Core Gui Widgets LinguistTools REQUIRED)
-
-set(TS_FILES VideoEdit_zh_CN.ts)
-
-set(PROJECT_SOURCES
-        main.cpp
-        mainwindow.cpp
-        mainwindow.h
-        mainwindow.ui
-        ${TS_FILES}
-)
-
-if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
-    qt_add_executable(VideoEdit
-        MANUAL_FINALIZATION
-        ${PROJECT_SOURCES}
-    )
-# Define target properties for Android with Qt 6 as:
-#    set_property(TARGET VideoEdit APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
-#                 ${CMAKE_CURRENT_SOURCE_DIR}/android)
-# For more information, see https://doc.qt.io/qt-6/qt-add-executable.html#target-creation
-
-    qt_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} ${TS_FILES})
-else()
-    if(ANDROID)
-        add_library(VideoEdit SHARED
-            ${PROJECT_SOURCES}
+set(FFMPEG_GIT              git@github.com:FFmpeg/FFmpeg.git)
+set(FFMPEG_BRANCH           origin/release/5.1)
+set(FFMPEG_ROOT             ${CMAKE_BINARY_DIR}/ffmpeg)
+set(FFMPEG_SRC              ${FFMPEG_ROOT}/src/ffmpeg)
+set(FFMPEG_BUILD_DIR        ${FFMPEG_ROOT}/src/ffmpeg-build)
+set(FFMPEG_CONFIGURE        cd ${FFMPEG_BUILD_DIR} && ${FFMPEG_SRC}/configure --prefix=${FFMPEG_ROOT}
+    --enable-shared --disable-static --disable-x86asm --disable-programs --disable-doc )
+set(FFMPEG_BUILD            cd ${FFMPEG_BUILD_DIR} && make -j16)
+set(FFMPEG_INSTALL          cd ${FFMPEG_BUILD_DIR} && make install)
+set(FFMPEG_LIB_DIR          ${FFMPEG_ROOT}/lib)
+set(FFMPEG_INCLUDE_DIR      ${FFMPEG_ROOT}/include)
+set(FFMPEG_DIR              ${FFMPEG_ROOT})
+set(FFmpeg_DIR              ${FFMPEG_ROOT})
+IF (NOT EXISTS ${FFMPEG_LIB_DIR})
+    ExternalProject_Add(ffmpeg
+        GIT_REPOSITORY          ${FFMPEG_GIT}
+        GIT_TAG                 ${FFMPEG_BRANCH}
+        PREFIX                  ${FFMPEG_ROOT}
+        CONFIGURE_COMMAND       ${FFMPEG_CONFIGURE}
+        BUILD_COMMAND           ${FFMPEG_BUILD}
+        INSTALL_COMMAND         ${FFMPEG_INSTALL}
         )
-# Define properties for Android with Qt 5 after find_package() calls as:
-#    set(ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/android")
-    else()
-        add_executable(VideoEdit
-            ${PROJECT_SOURCES}
-        )
-    endif()
+ENDIF()
 
-    qt5_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} ${TS_FILES})
-endif()
+#ffmpegthumbnailer option
+set(ENABLE_TESTS OFF)
 
-target_link_libraries(VideoEdit PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
+#libopenshot-audio option
+set(ENABLE_AUDIO_DOCS OFF)
+set(AUTO_INSTALL_DOCS OFF)
 
-set_target_properties(VideoEdit PROPERTIES
-    MACOSX_BUNDLE_GUI_IDENTIFIER my.example.com
-    MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
-    MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
-)
-
-if(QT_VERSION_MAJOR EQUAL 6)
-    qt_finalize_executable(VideoEdit)
-endif()
+#libopenshot option
+set(ENABLE_LIB_DOCS OFF)
+set(ENABLE_PARALLEL_CTEST OFF)
+set(USE_SYSTEM_JSONCPP OFF)
+set(ENABLE_MAGICK OFF)
+set(ENABLE_OPENCV OFF)
 
 
-# message(STATUS $<TARGET_FILE:Qt5::Core>)
-# message(STATUS $<TARGET_FILE_DIR:VideoEdit>)
+list(APPEND CMAKE_PREFIX_PATH ${FFMPEG_ROOT})
 
-# add_custom_command(TARGET VideoEdit POST_BUILD
-#         COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:Qt5::Core> $<TARGET_FILE_DIR:VideoEdit>
-#         COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:Qt5::Gui> $<TARGET_FILE_DIR:VideoEdit>
-#         COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:Qt5::Widgets> $<TARGET_FILE_DIR:VideoEdit>
-#         )
+add_subdirectory(libopenshot-audio)
+add_subdirectory(libopenshot)
+add_subdirectory(ffmpegthumbnailer)
+add_subdirectory(editor)
+
