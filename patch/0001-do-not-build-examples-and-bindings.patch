@@ -1,0 +1,27 @@
+From adb04109260b2ae50abb091807b27f0503469fa3 Mon Sep 17 00:00:00 2001
+From: laoning <laoning2008@hotmail.com>
+Date: Wed, 16 Nov 2022 22:45:13 +0800
+Subject: [PATCH] do not build examples and bindings
+
+---
+ CMakeLists.txt | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 6fb6a143..6233188b 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -130,8 +130,8 @@ endif()
+ ### Process subdirectories
+ ###
+ add_subdirectory(src)
+-add_subdirectory(examples)
+-add_subdirectory(bindings)
++# add_subdirectory(examples)
++# add_subdirectory(bindings)
+ 
+ ###
+ ### Configure Version.h header
+-- 
+2.37.3.windows.1
+

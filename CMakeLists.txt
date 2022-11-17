@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 3.5)
 include(ExternalProject)
+include(FetchContent)
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules)
-set(COMPLIER_FLAGS "-Wno-reserved-user-defined-literal")
-list(APPEND CMAKE_C_FLAGS ${COMPLIER_FLAGS})
-list(APPEND CMAKE_CXX_FLAGS ${COMPLIER_FLAGS})
+set(CMAKE_TOOLCHAIN_FILE "${CMAKE_CURRENT_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake"
+  CACHE STRING "Vcpkg toolchain file")
 
 project(VideoEditor VERSION 0.1 LANGUAGES CXX)
 
@@ -18,39 +18,56 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
  
 
-#IF (WIN32)
-#    set (Qt5_DIR "/Users/laoning/Qt5.12.12/5.12.12/clang_64/lib/cmake/Qt5")
-#ELSEIF (APPLE)
-#    set (Qt5_DIR "/Users/laoning/Qt5.12.12/5.12.12/clang_64/lib/cmake/Qt5")
-#ELSE ()
-#    MESSAGE(STATUS "unsuport system: ${CMAKE_SYSTEM}")
-#ENDIF ()
+set(VCPKG_DIR ${CMAKE_CURRENT_SOURCE_DIR}/vcpkg)
+set(VCPKG_PACKAGE ${VCPKG_DIR}/packages)
 
 
+IF (WIN32)
+    set(VCPKG_EXE_FILE ${VCPKG_DIR}/vcpkg.exe)
+    set(VCPKG_INSTALL_FILE ${VCPKG_DIR}/bootstrap-vcpkg.bat)
+    set(ZLIB_LIBRARY_NAME zlib_x86-windows)
+    set(FFMPEG_LIBRARY_NAME ffmpeg_x86-windows)
+    set(ZEROMQ_LIBRARY_NAME zeromq_x86-windows)
+ELSEIF (APPLE)
+    set(VCPKG_EXE_FILE ${VCPKG_DIR}/vcpkg.exe)
+    set(VCPKG_INSTALL_FILE ${VCPKG_DIR}/bootstrap-vcpkg.sh)
+    set(ZLIB_LIBRARY_NAME zlib_x86-windows)
+    set(FFMPEG_LIBRARY_NAME ffmpeg_x86-windows)
+    set(ZEROMQ_LIBRARY_NAME zeromq_x86-windows)
 
-set(FFMPEG_GIT              git@github.com:FFmpeg/FFmpeg.git)
-set(FFMPEG_BRANCH           origin/release/5.1)
-set(FFMPEG_ROOT             ${CMAKE_BINARY_DIR}/ffmpeg)
-set(FFMPEG_SRC              ${FFMPEG_ROOT}/src/ffmpeg)
-set(FFMPEG_BUILD_DIR        ${FFMPEG_ROOT}/src/ffmpeg-build)
-set(FFMPEG_CONFIGURE        cd ${FFMPEG_BUILD_DIR} && ${FFMPEG_SRC}/configure --prefix=${FFMPEG_ROOT}
-    --enable-shared --disable-static --disable-x86asm --disable-programs --disable-doc )
-set(FFMPEG_BUILD            cd ${FFMPEG_BUILD_DIR} && make -j16)
-set(FFMPEG_INSTALL          cd ${FFMPEG_BUILD_DIR} && make install)
-set(FFMPEG_LIB_DIR          ${FFMPEG_ROOT}/lib)
-set(FFMPEG_INCLUDE_DIR      ${FFMPEG_ROOT}/include)
-set(FFMPEG_DIR              ${FFMPEG_ROOT})
-set(FFmpeg_DIR              ${FFMPEG_ROOT})
-IF (NOT EXISTS ${FFMPEG_LIB_DIR})
-    ExternalProject_Add(ffmpeg
-        GIT_REPOSITORY          ${FFMPEG_GIT}
-        GIT_TAG                 ${FFMPEG_BRANCH}
-        PREFIX                  ${FFMPEG_ROOT}
-        CONFIGURE_COMMAND       ${FFMPEG_CONFIGURE}
-        BUILD_COMMAND           ${FFMPEG_BUILD}
-        INSTALL_COMMAND         ${FFMPEG_INSTALL}
-        )
+    set(COMPLIER_FLAGS "-Wno-reserved-user-defined-literal")
+    list(APPEND CMAKE_C_FLAGS ${COMPLIER_FLAGS})
+    list(APPEND CMAKE_CXX_FLAGS ${COMPLIER_FLAGS})
+ELSE ()
+    MESSAGE(STATUS "unsuport system: ${CMAKE_SYSTEM}")
+ENDIF ()
+
+IF (NOT EXISTS ${VCPKG_EXE_FILE})
+    message(STATUS "install vcpkg")
+    execute_process(COMMAND ${VCPKG_INSTALL_FILE}
+                    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/vcpkg)
 ENDIF()
+
+IF (NOT EXISTS ${VCPKG_PACKAGE}/${ZLIB_LIBRARY_NAME}/lib)
+    message(STATUS "install zlib")
+    execute_process(COMMAND ${VCPKG_EXE_FILE} install zlib
+                    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/vcpkg)
+ENDIF()
+
+IF (NOT EXISTS ${VCPKG_PACKAGE}/${FFMPEG_LIBRARY_NAME}/lib)
+    message(STATUS "install ffmpeg")
+    execute_process(COMMAND ${VCPKG_EXE_FILE} install ffmpeg
+                    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/vcpkg)
+ENDIF()
+
+IF (NOT EXISTS ${VCPKG_PACKAGE}/${ZEROMQ_LIBRARY_NAME}/lib)
+    message(STATUS "install zeromq")
+    execute_process(COMMAND ${VCPKG_EXE_FILE} install zeromq
+                    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/vcpkg)
+ENDIF()
+#set(ZeroMQ_LIBRARIES ${VCPKG_PACKAGE}/${ZEROMQ_LIBRARY_NAME}/lib)
+#set(ZeroMQ_INCLUDE_DIR ${VCPKG_PACKAGE}/${ZEROMQ_LIBRARY_NAME}/include)
+
 
 #ffmpegthumbnailer option
 set(ENABLE_TESTS OFF)
@@ -66,10 +83,17 @@ set(USE_SYSTEM_JSONCPP OFF)
 set(ENABLE_MAGICK OFF)
 set(ENABLE_OPENCV OFF)
 
+set(ENABLE_COVERAGE OFF)
+set(ENABLE_PARALLEL_CTEST OFF)
+set(ENABLE_LIB_DOCS OFF)
+set(ENABLE_TESTS OFF)
+set(DISABLE_TESTS ON)
 
-list(APPEND CMAKE_PREFIX_PATH ${FFMPEG_ROOT})
+execute_process(COMMAND git apply ${CMAKE_CURRENT_SOURCE_DIR}/patch/0001-do-not-build-examples-and-bindings.patch
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/libopenshot)
 
 add_subdirectory(libopenshot-audio)
+
 add_subdirectory(libopenshot)
 add_subdirectory(ffmpegthumbnailer)
 add_subdirectory(editor)

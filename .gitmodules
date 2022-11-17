@@ -7,3 +7,6 @@
 [submodule "libopenshot"]
 	path = libopenshot
 	url = git@github.com:OpenShot/libopenshot.git
+[submodule "vcpkg"]
+	path = vcpkg
+	url = git@github.com:microsoft/vcpkg.git
