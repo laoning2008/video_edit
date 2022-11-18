@@ -2,9 +2,13 @@ cmake_minimum_required(VERSION 3.5)
 include(ExternalProject)
 include(FetchContent)
 
+
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules)
 set(CMAKE_TOOLCHAIN_FILE "${CMAKE_CURRENT_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake"
   CACHE STRING "Vcpkg toolchain file")
+#set(VCPKG_LIBRARY_LINKAGE dynamic)
+#set(VCPKG_CRT_LINKAGE dynamic)
+#set(VCPKG_BUILD_TYPE release)
 
 project(VideoEditor VERSION 0.1 LANGUAGES CXX)
 
@@ -14,33 +18,45 @@ set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
- 
+
+set(VCPKG_TARGET_TRIPLET "x64-osx-dynamic")
+
 
 set(VCPKG_DIR ${CMAKE_CURRENT_SOURCE_DIR}/vcpkg)
 set(VCPKG_PACKAGE ${VCPKG_DIR}/packages)
 
+#list(APPEND CMAKE_SYSTEM_PROGRAM_PATH "/usr/local/Cellar/nasm/2.15.05/bin")
+#message(STATUS "CMAKE_SYSTEM_PROGRAM_PATH:" ${CMAKE_SYSTEM_PROGRAM_PATH})
+#vcpkg_host_path_list(PREPEND PATH "/usr/local/Cellar/nasm/2.15.05/bin")
 
 IF (WIN32)
     set(VCPKG_EXE_FILE ${VCPKG_DIR}/vcpkg.exe)
     set(VCPKG_INSTALL_FILE ${VCPKG_DIR}/bootstrap-vcpkg.bat)
-    set(ZLIB_LIBRARY_NAME zlib_x86-windows)
-    set(FFMPEG_LIBRARY_NAME ffmpeg_x86-windows)
-    set(ZEROMQ_LIBRARY_NAME zeromq_x86-windows)
 ELSEIF (APPLE)
-    set(VCPKG_EXE_FILE ${VCPKG_DIR}/vcpkg.exe)
+    set(VCPKG_EXE_FILE ${VCPKG_DIR}/vcpkg)
     set(VCPKG_INSTALL_FILE ${VCPKG_DIR}/bootstrap-vcpkg.sh)
-    set(ZLIB_LIBRARY_NAME zlib_x86-windows)
-    set(FFMPEG_LIBRARY_NAME ffmpeg_x86-windows)
-    set(ZEROMQ_LIBRARY_NAME zeromq_x86-windows)
 
     set(COMPLIER_FLAGS "-Wno-reserved-user-defined-literal")
     list(APPEND CMAKE_C_FLAGS ${COMPLIER_FLAGS})
     list(APPEND CMAKE_CXX_FLAGS ${COMPLIER_FLAGS})
+
+    set (ENV{PATH}  /opt/local/bin:$ENV{PATH})
 ELSE ()
     MESSAGE(STATUS "unsuport system: ${CMAKE_SYSTEM}")
 ENDIF ()
+
+
+
+set(ZLIB_LIBRARY_NAME zlib)
+set(FFMPEG_LIBRARY_NAME ffmpeg)
+set(ZEROMQ_LIBRARY_NAME zeromq)
+
+set(ZLIB_PACKAGE_NAME ${ZLIB_LIBRARY_NAME}_${VCPKG_TARGET_TRIPLET})
+set(FFMPEG_PACKAGE_NAME ${FFMPEG_LIBRARY_NAME}_${VCPKG_TARGET_TRIPLET})
+set(ZEROMQ_PACKAGE_NAME ${ZEROMQ_LIBRARY_NAME}_${VCPKG_TARGET_TRIPLET})
+
 
 IF (NOT EXISTS ${VCPKG_EXE_FILE})
     message(STATUS "install vcpkg")
@@ -48,25 +64,23 @@ IF (NOT EXISTS ${VCPKG_EXE_FILE})
                     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/vcpkg)
 ENDIF()
 
-IF (NOT EXISTS ${VCPKG_PACKAGE}/${ZLIB_LIBRARY_NAME}/lib)
+IF (NOT EXISTS ${VCPKG_PACKAGE}/${ZLIB_PACKAGE_NAME}/lib)
     message(STATUS "install zlib")
-    execute_process(COMMAND ${VCPKG_EXE_FILE} install zlib
-                    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/vcpkg)
+    execute_process(COMMAND ${VCPKG_EXE_FILE} install ${ZLIB_LIBRARY_NAME})
 ENDIF()
 
-IF (NOT EXISTS ${VCPKG_PACKAGE}/${FFMPEG_LIBRARY_NAME}/lib)
+IF (NOT EXISTS ${VCPKG_PACKAGE}/${FFMPEG_PACKAGE_NAME}/lib)
     message(STATUS "install ffmpeg")
-    execute_process(COMMAND ${VCPKG_EXE_FILE} install ffmpeg
-                    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/vcpkg)
+    execute_process(COMMAND ${VCPKG_EXE_FILE} install ${FFMPEG_LIBRARY_NAME})
 ENDIF()
 
-IF (NOT EXISTS ${VCPKG_PACKAGE}/${ZEROMQ_LIBRARY_NAME}/lib)
+IF (NOT EXISTS ${VCPKG_PACKAGE}/${ZEROMQ_PACKAGE_NAME}/lib)
     message(STATUS "install zeromq")
-    execute_process(COMMAND ${VCPKG_EXE_FILE} install zeromq
-                    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/vcpkg)
+    execute_process(COMMAND ${VCPKG_EXE_FILE} install ${ZEROMQ_LIBRARY_NAME})
 ENDIF()
-#set(ZeroMQ_LIBRARIES ${VCPKG_PACKAGE}/${ZEROMQ_LIBRARY_NAME}/lib)
-#set(ZeroMQ_INCLUDE_DIR ${VCPKG_PACKAGE}/${ZEROMQ_LIBRARY_NAME}/include)
+
+message(STATUS "VCPKG_CXX_FLAGS:" ${VCPKG_CXX_FLAGS})
+message(STATUS "VCPKG_LINKER_FLAGS:" ${VCPKG_LINKER_FLAGS})
 
 
 #ffmpegthumbnailer option
