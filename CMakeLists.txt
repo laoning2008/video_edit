@@ -1,39 +1,20 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.24)
 include(ExternalProject)
 include(FetchContent)
 
-
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules)
-set(CMAKE_TOOLCHAIN_FILE "${CMAKE_CURRENT_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake"
-  CACHE STRING "Vcpkg toolchain file")
-#set(VCPKG_LIBRARY_LINKAGE dynamic)
-#set(VCPKG_CRT_LINKAGE dynamic)
-#set(VCPKG_BUILD_TYPE release)
-
 project(VideoEditor VERSION 0.1 LANGUAGES CXX)
 
-set(CMAKE_INCLUDE_CURRENT_DIR ON)
-
-set(CMAKE_AUTOUIC ON)
-set(CMAKE_AUTOMOC ON)
-set(CMAKE_AUTORCC ON)
-
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
-set(VCPKG_TARGET_TRIPLET "x64-osx-dynamic")
-
-
+set(CUSTOM_TRIPLETS triplets/community)
 set(VCPKG_DIR ${CMAKE_CURRENT_SOURCE_DIR}/vcpkg)
 set(VCPKG_PACKAGE ${VCPKG_DIR}/packages)
-
-#list(APPEND CMAKE_SYSTEM_PROGRAM_PATH "/usr/local/Cellar/nasm/2.15.05/bin")
-#message(STATUS "CMAKE_SYSTEM_PROGRAM_PATH:" ${CMAKE_SYSTEM_PROGRAM_PATH})
-#vcpkg_host_path_list(PREPEND PATH "/usr/local/Cellar/nasm/2.15.05/bin")
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules )
+set(CMAKE_TOOLCHAIN_FILE "${CMAKE_CURRENT_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake")
 
 IF (WIN32)
     set(VCPKG_EXE_FILE ${VCPKG_DIR}/vcpkg.exe)
     set(VCPKG_INSTALL_FILE ${VCPKG_DIR}/bootstrap-vcpkg.bat)
+
+    set(VCPKG_TARGET_TRIPLET "x86-windows-dynamic")
 ELSEIF (APPLE)
     set(VCPKG_EXE_FILE ${VCPKG_DIR}/vcpkg)
     set(VCPKG_INSTALL_FILE ${VCPKG_DIR}/bootstrap-vcpkg.sh)
@@ -42,20 +23,36 @@ ELSEIF (APPLE)
     list(APPEND CMAKE_C_FLAGS ${COMPLIER_FLAGS})
     list(APPEND CMAKE_CXX_FLAGS ${COMPLIER_FLAGS})
 
-    set (ENV{PATH}  /opt/local/bin:$ENV{PATH})
+    set (ENV{PATH}  $ENV{PATH}:/opt/local/bin)
+    set(Qt5_DIR /Users/laoning/Qt5.12.12/5.12.12/clang_64/lib/cmake/Qt5)
+
+    set(VCPKG_TARGET_TRIPLET "x64-osx-dynamic")
 ELSE ()
     MESSAGE(STATUS "unsuport system: ${CMAKE_SYSTEM}")
 ENDIF ()
 
 
+list(APPEND CMAKE_PREFIX_PATH ${VCPKG_DIR}/installed/${VCPKG_TARGET_TRIPLET})
 
-set(ZLIB_LIBRARY_NAME zlib)
-set(FFMPEG_LIBRARY_NAME ffmpeg)
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+
+set(ZLIB_LIBRARY_NAME ZLIB)
+set(OpenSSL_LIBRARY_NAME OpenSSL)
+set(FFMPEG_LIBRARY_NAME FFmpeg)
+set(JPEG_LIBRARY_NAME libjpeg-turbo)
+set(PNG_LIBRARY_NAME libpng)
 set(ZEROMQ_LIBRARY_NAME zeromq)
-
-set(ZLIB_PACKAGE_NAME ${ZLIB_LIBRARY_NAME}_${VCPKG_TARGET_TRIPLET})
-set(FFMPEG_PACKAGE_NAME ${FFMPEG_LIBRARY_NAME}_${VCPKG_TARGET_TRIPLET})
-set(ZEROMQ_PACKAGE_NAME ${ZEROMQ_LIBRARY_NAME}_${VCPKG_TARGET_TRIPLET})
+set(OMP_LIBRARY_NAME libomp)
+set(ZLIB_PACKAGE_NAME ${ZLIB_LIBRARY_NAME}:${VCPKG_TARGET_TRIPLET})
+set(OPENSSL_PACKAGE_NAME ${OpenSSL_LIBRARY_NAME}:${VCPKG_TARGET_TRIPLET})
+set(FFMPEG_PACKAGE_NAME ${FFMPEG_LIBRARY_NAME}:${VCPKG_TARGET_TRIPLET})
+set(JPEG_PACKAGE_NAME ${JPEG_LIBRARY_NAME}:${VCPKG_TARGET_TRIPLET})
+set(PNG_PACKAGE_NAME ${PNG_LIBRARY_NAME}:${VCPKG_TARGET_TRIPLET})
+set(ZEROMQ_PACKAGE_NAME ${ZEROMQ_LIBRARY_NAME}:${VCPKG_TARGET_TRIPLET})
+set(OMP_PACKAGE_NAME ${OMP_LIBRARY_NAME}:${VCPKG_TARGET_TRIPLET})
 
 
 IF (NOT EXISTS ${VCPKG_EXE_FILE})
@@ -64,23 +61,62 @@ IF (NOT EXISTS ${VCPKG_EXE_FILE})
                     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/vcpkg)
 ENDIF()
 
-IF (NOT EXISTS ${VCPKG_PACKAGE}/${ZLIB_PACKAGE_NAME}/lib)
+find_package(${ZLIB_LIBRARY_NAME})
+IF (NOT ${ZLIB_LIBRARY_NAME}_FOUND)
     message(STATUS "install zlib")
-    execute_process(COMMAND ${VCPKG_EXE_FILE} install ${ZLIB_LIBRARY_NAME})
+    execute_process(COMMAND ${VCPKG_EXE_FILE} install ${ZLIB_PACKAGE_NAME}
+        --overlay-triplets=${CUSTOM_TRIPLETS}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/vcpkg)
 ENDIF()
 
-IF (NOT EXISTS ${VCPKG_PACKAGE}/${FFMPEG_PACKAGE_NAME}/lib)
-    message(STATUS "install ffmpeg")
-    execute_process(COMMAND ${VCPKG_EXE_FILE} install ${FFMPEG_LIBRARY_NAME})
+find_package(${OpenSSL_LIBRARY_NAME})
+IF (NOT ${OpenSSL_LIBRARY_NAME}_FOUND)
+    message(STATUS "install openssl")
+    execute_process(COMMAND ${VCPKG_EXE_FILE} install ${OPENSSL_PACKAGE_NAME}
+        --overlay-triplets=${CUSTOM_TRIPLETS}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/vcpkg)
 ENDIF()
 
-IF (NOT EXISTS ${VCPKG_PACKAGE}/${ZEROMQ_PACKAGE_NAME}/lib)
+find_package(${FFMPEG_LIBRARY_NAME})
+IF (NOT ${FFMPEG_LIBRARY_NAME}_FOUND)
+    message(STATUS "install libjpeg")
+    execute_process(COMMAND ${VCPKG_EXE_FILE} install ${JPEG_PACKAGE_NAME}
+        --overlay-triplets=${CUSTOM_TRIPLETS}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/vcpkg)
+ENDIF()
+
+find_package(${PNG_LIBRARY_NAME})
+IF (NOT ${PNG_LIBRARY_NAME}_FOUND)
+    message(STATUS "install libpng")
+    execute_process(COMMAND ${VCPKG_EXE_FILE} install ${PNG_PACKAGE_NAME}
+        --overlay-triplets=${CUSTOM_TRIPLETS}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/vcpkg)
+ENDIF()
+
+find_package(${JPEG_LIBRARY_NAME})
+IF (NOT ${JPEG_LIBRARY_NAME}_FOUND)
+    message(STATUS "install jpeg")
+    execute_process(COMMAND ${VCPKG_EXE_FILE} install ${JPEG_PACKAGE_NAME}
+        --overlay-triplets=${CUSTOM_TRIPLETS}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/vcpkg)
+ENDIF()
+
+find_package(${ZEROMQ_LIBRARY_NAME})
+IF (NOT ${ZEROMQ_LIBRARY_NAME}_FOUND)
     message(STATUS "install zeromq")
-    execute_process(COMMAND ${VCPKG_EXE_FILE} install ${ZEROMQ_LIBRARY_NAME})
+    execute_process(COMMAND ${VCPKG_EXE_FILE} install ${ZEROMQ_PACKAGE_NAME}
+        --overlay-triplets=${CUSTOM_TRIPLETS}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/vcpkg)
 ENDIF()
 
-message(STATUS "VCPKG_CXX_FLAGS:" ${VCPKG_CXX_FLAGS})
-message(STATUS "VCPKG_LINKER_FLAGS:" ${VCPKG_LINKER_FLAGS})
+
+find_package(${OMP_LIBRARY_NAME})
+IF (NOT ${OMP_LIBRARY_NAME}_FOUND)
+    message(STATUS "install openmp")
+    execute_process(COMMAND ${VCPKG_EXE_FILE} install ${OMP_PACKAGE_NAME}
+        --overlay-triplets=${CUSTOM_TRIPLETS}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/vcpkg)
+ENDIF()
 
 
 #ffmpegthumbnailer option
