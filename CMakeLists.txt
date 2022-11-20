@@ -4,9 +4,8 @@ include(FetchContent)
 
 project(VideoEditor VERSION 0.1 LANGUAGES CXX)
 
-set(CUSTOM_TRIPLETS triplets/community)
 set(VCPKG_DIR ${CMAKE_CURRENT_SOURCE_DIR}/vcpkg)
-set(VCPKG_PACKAGE ${VCPKG_DIR}/packages)
+set(VCPKG_PACKAGE ${VCPKG_DIR}/installed)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules )
 set(CMAKE_TOOLCHAIN_FILE "${CMAKE_CURRENT_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake")
 
@@ -14,7 +13,8 @@ IF (WIN32)
     set(VCPKG_EXE_FILE ${VCPKG_DIR}/vcpkg.exe)
     set(VCPKG_INSTALL_FILE ${VCPKG_DIR}/bootstrap-vcpkg.bat)
 
-    set(VCPKG_TARGET_TRIPLET "x86-windows-dynamic")
+    set(VCPKG_TARGET_TRIPLET "x86-windows")
+    set(CUSTOM_TRIPLETS triplets)
 ELSEIF (APPLE)
     set(VCPKG_EXE_FILE ${VCPKG_DIR}/vcpkg)
     set(VCPKG_INSTALL_FILE ${VCPKG_DIR}/bootstrap-vcpkg.sh)
@@ -27,6 +27,7 @@ ELSEIF (APPLE)
     set(Qt5_DIR /Users/laoning/Qt5.12.12/5.12.12/clang_64/lib/cmake/Qt5)
 
     set(VCPKG_TARGET_TRIPLET "x64-osx-dynamic")
+    set(CUSTOM_TRIPLETS triplets/community)
 ELSE ()
     MESSAGE(STATUS "unsuport system: ${CMAKE_SYSTEM}")
 ENDIF ()
@@ -46,6 +47,7 @@ set(JPEG_LIBRARY_NAME libjpeg-turbo)
 set(PNG_LIBRARY_NAME libpng)
 set(ZEROMQ_LIBRARY_NAME zeromq)
 set(OMP_LIBRARY_NAME libomp)
+set(CPP_ZMQ_LIBRARY_NAME cppzmq)
 set(ZLIB_PACKAGE_NAME ${ZLIB_LIBRARY_NAME}:${VCPKG_TARGET_TRIPLET})
 set(OPENSSL_PACKAGE_NAME ${OpenSSL_LIBRARY_NAME}:${VCPKG_TARGET_TRIPLET})
 set(FFMPEG_PACKAGE_NAME ${FFMPEG_LIBRARY_NAME}:${VCPKG_TARGET_TRIPLET})
@@ -53,6 +55,7 @@ set(JPEG_PACKAGE_NAME ${JPEG_LIBRARY_NAME}:${VCPKG_TARGET_TRIPLET})
 set(PNG_PACKAGE_NAME ${PNG_LIBRARY_NAME}:${VCPKG_TARGET_TRIPLET})
 set(ZEROMQ_PACKAGE_NAME ${ZEROMQ_LIBRARY_NAME}:${VCPKG_TARGET_TRIPLET})
 set(OMP_PACKAGE_NAME ${OMP_LIBRARY_NAME}:${VCPKG_TARGET_TRIPLET})
+set(CPP_ZMQ_PACKAGE_NAME ${CPP_ZMQ_LIBRARY_NAME}:${VCPKG_TARGET_TRIPLET})
 
 
 IF (NOT EXISTS ${VCPKG_EXE_FILE})
@@ -108,6 +111,8 @@ IF (NOT ${ZEROMQ_LIBRARY_NAME}_FOUND)
         --overlay-triplets=${CUSTOM_TRIPLETS}
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/vcpkg)
 ENDIF()
+set(ZeroMQ_DIR ${VCPKG_PACKAGE}/${VCPKG_TARGET_TRIPLET})
+message(STATUS "ZeroMQ_DIR:" ${ZeroMQ_DIR})
 
 
 find_package(${OMP_LIBRARY_NAME})
@@ -117,6 +122,15 @@ IF (NOT ${OMP_LIBRARY_NAME}_FOUND)
         --overlay-triplets=${CUSTOM_TRIPLETS}
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/vcpkg)
 ENDIF()
+
+find_package(${CPP_ZMQ_LIBRARY_NAME})
+IF (NOT ${CPP_ZMQ_LIBRARY_NAME}_FOUND)
+    message(STATUS "install openmp")
+    execute_process(COMMAND ${VCPKG_EXE_FILE} install ${CPP_ZMQ_PACKAGE_NAME}
+        --overlay-triplets=${CUSTOM_TRIPLETS}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/vcpkg)
+ENDIF()
+
 
 
 #ffmpegthumbnailer option

@@ -14,7 +14,7 @@ find_path(ZeroMQ_INCLUDE_DIR zmq.h
     ${PC_LIBZMQ_INCLUDE_DIRS})
 
 find_library(ZeroMQ_LIBRARY
-  NAMES zmq
+  NAMES libzmq
   PATHS
     ${ZeroMQ_DIR}/lib
     ${PC_LIBZMQ_LIBDIR}
