@@ -8,6 +8,7 @@ pkg_check_modules(PC_LIBZMQ QUIET libzmq)
 
 set(ZeroMQ_VERSION ${PC_LIBZMQ_VERSION})
 
+message(STATUS "CMAKE_PREFIX_PATH:" ${CMAKE_PREFIX_PATH})
 find_path(ZeroMQ_INCLUDE_DIR zmq.h
   PATHS
     ${ZeroMQ_DIR}/include

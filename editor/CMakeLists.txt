@@ -22,7 +22,7 @@ set(PROJECT_SOURCES
 add_executable(VideoEditor ${PROJECT_SOURCES})
 
 find_package(Qt5 COMPONENTS Core Gui Widgets LinguistTools REQUIRED)
-qt5_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} ${TS_FILES})
+qt5_create_translation(QM_FILES ${CMAKE_CURRENT_SOURCE_DIR} ${TS_FILES})
 
 find_package(FFmpeg REQUIRED)
 
